@@ -1,0 +1,388 @@
+---
+title: "USA Real Estate Data"
+author: "Team 6"
+date: "10/17/2022"
+output:  
+    rmdformats::downcute:
+      toc_float: true
+      number_sections: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+options(scipen = 999, digits = 3, big.mark=",", warn = -1)
+```
+
+```{r init, include=FALSE}
+# The package "ezids" (EZ Intro to Data Science) includes a lot of the helper functions we developed for the course. 
+# Some of the frequently used functions are loadPkg(), xkabledply(), xkablesummary(), uzscale(), etc.
+library(ezids)
+ 
+# some of common options (and the defaults) are: 
+# include=T, eval=T, echo=T, results='hide'/'asis'/'markup',..., collapse=F, warning=T, message=T, error=T, cache=T, fig.width=6, fig.height=4, fig.dim=c(6,4) #inches, fig.align='left'/'center','right', 
+# knitr::opts_chunk$set(warning = F, results = "markup", message = F)
+knitr::opts_chunk$set(warning = F, results = "show", message = F)
+options(scientific=T, digits = 3) 
+options(scipen=999, digits = 3) 
+# ‘scipen’: integer. A penalty to be applied when deciding to print numeric values in fixed or exponential notation.  Positive values bias towards fixed and negative towards scientific notation: fixed notation will be preferred unless it is more than ‘scipen’ digits wider.
+# use scipen=999 to prevent scientific notation at all times
+```
+```{r include=FALSE}
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(corrplot)
+```
+
+```{r include=FALSE}
+df <- data.frame(read.csv("../data/houseprices.csv"))
+```
+# Introduction
+The USA has one of the hottest real estate markets right now. We needed a massive amount of data with various factors to know and analyze the real-estate data. Forecasting and evaluating the real estate market helps assess the stability of the US real estate market. Predicting home prices may also give a solid foundation for real estate investors to develop investment strategies and minimize losses. The issue arises when numerous variables, such as location and property demand, may influence the house price. Thus most stakeholders, including buyers and developers, home builders, and the real estate sector, would like to know the exact attributes or the specific factors that influence house prices to help customers and investors make decisions.
+
+To get all this data, we got a scraped dataset from the website https://www.realtor.com (found on Kaggle). This dataset contains features like no. of beds, baths, streets, city, and zip code and has 923,160 observations. To get meaningful insights into this massive pile of data, we have to perform statistical analysis, Exploratory Data Analysis on the data set and visualize some of the observations.
+
+This summary report is organised as follows - 
+
+1. Introduction
+2. Description of the data
+3. EDA: Insights from Visualization
+4. Limitations and difficulties
+5. Answering the SMART Questions
+6. Conclusions
+7. Links
+
+## Smart Questions
+1. Which location contains the house with the highest and lowest prices?
+2. What is the correlation between house price and other attributes?
+3. Which is the most significant factor to be considered in house prices?
+4. Does the mean price value affected by no. of beds and baths?
+
+# Description of the Data
+## Original Data
+The dataset named "houseprices.csv" contains 923160 values and 12 variables. More details are shown below-
+
+* status: Whether the house is sold or not.
+
+* price: The price of the house
+
+* bed: No. of beds in the house
+
+* bath: No. of baths in the house
+
+* acre_lot: The lot size in acres
+
+* full_address: The address of the house
+
+* street: The full address of the house spliced upto the street name.
+
+* city: The full address of the house is spliced only to the city.
+
+* state: The state in which the house is located
+
+* zip_code: The zip code of the area in which the house is located
+
+* house_size: The size of the house in sq. ft.
+
+* sold_date: Mostly a null_value column as most houses are not sold yet.
+
+The lowest price in the dataset is `r min(df$price)` while the highest is `r max(df$price)`. This means that there is much variance between the data. The mean of the price is `r round(mean(df$price))`, and the standard deviation is `r  round(sd(df$price))`. The variance is `r round(var(df$price))`. The variance shows that the data is distributed very widely and spread out from the mean.
+
+## Preprocessing:
+Our dataset is ready for preprocessing, so we executed the following steps:
+
+1. We checked the number of null and duplicated values in the dataset; surprisingly, it was 84% of our dataset.
+
+2. We then tried to replace the null values with the mean and median, but that killed the insights from our data as it is real-world and simply does not work in the way we expected.
+
+3. We removed the following columns: full_address, street, zip_code, and sold_date. This was done because these variables in no way affected the output from the data and the correlation was also not great.
+
+4. Then, we converted the bed and bath into factor variables from integer variables to work as intervals.
+
+5. Finally, we were left with `r nrow(df)` rows of data.
+
+6. Our data is finally preprocessed and ready to perform EDA.
+
+```{r echo=FALSE, results=T}
+print(summary(df))
+```
+
+# EDA
+To perform EDA in our dataset, we first need to know the relationship between our dependent and independent variables. So we built some graphs between our dependent(Price) and independent variables(everything else).
+
+## Visualization
+First, we need to know what the distribution of the variables. So, we created a graph which shows the frequency of the house size:
+
+```{r echo=FALSE, results=T}
+ggplot(df, aes(house_size)) + geom_histogram(binwidth = 20, col = 'light green' ) + labs(title = "Frequency of the house sizes")
+```
+Here, we can understand that most of the houses in the dataset are medium-sized houses in the market. So, to check the acre _lot for these medium-sized houses, we create a similar histogram for the dataset.
+```{r echo=FALSE, results=T}
+ggplot(df, aes(acre_lot)) + geom_histogram(binwidth = 0.008, col = 'light green' ) + labs(title = "Frequency of the acre lot")
+```
+Here we can see that even for medium-sized houses, the acre_lot is very low. This means the house can be famous in the market if people have parking for one car and a small lawn.
+
+Next, we need to analyze the relationship between dependent and independent variables. First, we need to see the relationship between house size and house price.
+
+```{r echo=FALSE, results=T}
+ggplot(df, aes(x = house_size, y = price)) + geom_bar(stat = "identity", width = 80, col = 'light green') + labs(title = 'Price vs House_size')
+```
+We can observe that even though the size of the house is increasing drastically, the price of the house is not increasing in tandem with the size of the house. This means that some more significant factors affect the price of the house.
+
+To find these factors, we did the bar plot between the dependent and independent variables.
+
+```{r echo=FALSE, results=T}
+ggplot(df, aes(x = bath, y = price)) + geom_bar(stat = "identity", width = 0.6, col = 'light green') + labs(title = 'Price vs No. of bathrooms')
+```
+This graph shows that the highest-priced houses are mostly found with three bathrooms, and four-bathroom houses are generally priced less than others. This shows that the house is hugely popular as long as people have 2 or 3 bathrooms. However, this graph does not explain why the 4-bathroom houses are priced so low.
+
+Next, the graph is between no. of bedrooms and the price of the house.
+
+```{r echo=FALSE, results=T}
+ggplot(df, aes(x = bed, y = price)) + geom_bar(stat = "identity", width = 0.7, col = 'light green') + labs(title = 'Price vs No. of beds')
+```
+Even this graph tells the same thing: the highest-priced houses have 3 to 4 bedrooms, and houses with 6 or 7 bedrooms are priced horrifyingly low.
+
+Now, the only independent variable left is the area of the house. So, to plot the graph between the price of the house and the area of the house.
+
+```{r echo=FALSE, results=T}
+ggplot(df, aes(x = state, y = price)) + geom_bar(stat = "identity", width = 0.8, col = 'light green') + labs(title = 'Price vs House_size') + theme(axis.text.x = element_text(angle = 90))
+```
+Most of our confusion was explained by this graph. As the sizes of the house got bigger, we can know that they were either in the suburbs or where the house prices were low. Some of the states were Maine, a part of the Virgin Islands. From this rationale, we can analyze that big cities like New York will not have big houses as they are heavily overcrowded, and even tiny houses are overpriced.
+
+We wanted to determine each state's mathematical values separately, such as mean, median, and standard deviation. So we used the dplyr function to group the data by states and calculate the values.
+
+```{r echo=FALSE, results=T}
+stats<-data.frame(df %>% group_by(state) %>% summarise(mean = mean(price), median = median(price), max= max(price), min = min(price), sd = sd(price)))
+```
+
+First we visualized the data between the mean price and the state.
+```{r echo=FALSE, results=T}
+ggplot(stats, aes(x = state, y = mean)) + geom_bar(stat = "identity", col = 'light blue', fill = 'light blue') + theme(axis.text.x = element_text(angle=90)) + labs(title = 'Mean prices in different states')
+```
+This shows that houses in New York have the highest mean of houses. This means the range of the price of the houses is high. The Virgin Islands follow this. In the previous graphs, we have seen that the Virgin Islands have the least amount of price. However, from this graph, we can gain that although the price is low, there is a significant variation between the cities in which the houses are located. The costliest houses in the Virgin Islands are all concentrated in one place. 
+
+Similarly, the graph of the median price in states is as follows:
+```{r echo=FALSE, results=T}
+ggplot(stats, aes(x = state, y = median)) + geom_bar(stat = "identity", col = 'light blue', fill = 'light blue') + theme(axis.text.x = element_text(angle=90)) + labs(title = 'Median prices in different states')
+```
+
+The median prices of different states show that the highest median price is in New York City. This shows us how much the prices in New York are. 
+
+We also did a similar graph for each states standard deviation of prices. This will show us the distribution of prices from the mean.
+
+```{r echo=FALSE, results=T}
+ggplot(stats, aes(x = state, y = sd)) + geom_bar(stat = "identity", col = 'light blue', fill = 'light blue') + theme(axis.text.x = element_text(angle=90)) + labs(title = 'Standard deviation between prices in different states')
+```
+This graph shows that the deviation from the mean is the highest in the Virgin Islands, where the difference between the lowest and the highest prices is very high. The deviation from the mean is also very high in the Virgin Islands. This speaks to the geography of the state.
+
+## Testing
+
+### Tukey-HSD test
+```{r echo=FALSE, results=T}
+anova_hb <- aov(price ~ factor(bed), data= df)
+anova_hb_summary <- summary(anova_hb)
+anova_hb_summary
+xkabledply(anova_hb)
+tukey_test <- TukeyHSD(anova_hb)
+tukey_test
+plot(TukeyHSD(anova_hb, conf.level=.95))
+```
+
+H0: The mean house prices are the same across the different numbers of beds.
+H1: The mean house prices are different across the different numbers of beds.
+The ANOVA test for the house price and the number of beds indicates that as p-value is less than 0.05. So we need to reject the null hypothesis, and the mean price of the houses is different for the number of beds.
+As the means of the groups are significantly different, we can use the Turkey test for possible pairwise comparisons. Expect 6-4 and 7-5 remaining comparisons are statistically significant at a 95 percent confidence interval. The Tukey plot describes the difference in the mean values between the different bed levels.
+
+```{r echo=FALSE, results=T}
+anova_hbath <- aov(price ~ factor(bath), data= df)
+anova_hbath_summary <- summary(anova_hbath)
+anova_hbath_summary
+xkabledply(anova_hbath)
+tukey_test_hbath <- TukeyHSD(anova_hbath)
+tukey_test_hbath
+plot(TukeyHSD(anova_hbath, conf.level=.95))
+```
+H0: The mean house prices are the same across the different numbers of baths.
+H1: The mean house prices are different across the different numbers of baths.
+The ANOVA test for the house price and the number of bathrooms indicates that the p-value is less than 0.05. So we need to reject the null hypothesis, and the mean price of the houses is different from the number of baths. From the Tukey test, the pairwise comparison between each group is statistically significant at a 95% confidence interval.
+
+### Chi test
+```{r echo=FALSE, results=T}
+contable = table(df$bed, df$bath)
+xkabledply(contable, title="Contingency table for beds vs baths in house_dataframe")
+chitest = chisq.test(contable)
+chitest
+```
+H0: The number of bedrooms and number of bathrooms is independent.
+H1: The number of bedrooms and number of bedrooms is not independent.
+Since the p-value is less than 0.0000000000000002, which is lower than 0.05, so we need to reject the null hypothesis. Thus, condition and grade are not independent. Both the bed and bath are correlated.
+# Limitations in our data
+
+One of the main limitations of this dataset is that the number of N/A values is massive among different columns. If we remove all of the N/A values in the data frame, too few datasets will be left for our analysis. In this case, we remove the N/A values of the specific columns we are interested in different tests. For example, if we look for the linear regression between house price and the number of beds, all the N/A values in these two columns would be removed accordingly, and the remaining columns will keep the same.
+
+Secondly, our dataset does not include a concrete 'time' column for the listing housings, so we cannot perform any predictive analysis.
+
+# Answering the SMART questions
+## Which location contains the house with the highest and lowest prices? 
+
+The boxplot shows that New York and the Virgin Islands ranked the highest housing prices among all the states. Let us see the specific data summary. The range of housing prices in the Virgin Islands is from a maximum of $1,475,000 to a minimum of $135,000, which is smaller than New York ranging from $1,625,000 to $20,000 which is a pretty shocking fact that the wealth gap in New York has massively differed from place to place. At the same time, we can tell the vast gap between the poor and the wealthy from the outliers indicated in the box chart that New York has an unbalanced income gap among the buyers.
+
+Oppositely, Puerto Rico ranked the lowest for housing prices. The median price is $135,000, and the mean price is $232,215 is the lowest among all the states listed in the data frame in which the median price of New York and the Virgin Islands are almost sixfold the housing prices of Puerto Rico. However, the range of prices is even more significant than in New York. The variance is 64,471,818,931, which strongly indicates that the income gap of the housing investors in Puerto Rico is dramatically unbalanced.
+
+```{r echo=FALSE, results=T}
+ggplot(df, aes(state, price, fill= state)) + geom_boxplot() + theme(axis.text.x = element_text(angle = 90))
+```
+```{r}
+ggplot(stats, aes(x = state, y = min)) + geom_bar(stat = "identity", col='light green', fill = 'light green') + theme(axis.text.x = element_text(angle=90)) + labs(title = "Minimum prices of the houses for different states")
+```
+
+## What is the correlation between house price and other attributes?
+
+Below is our comprehensive correlation plot.
+Along with the plot, we can read and indicate that bath and house size are the two variables that significantly affect the housing price among the other variables, which matches our statement in the overview section. 
+```{r include=FALSE}
+head(df)
+df_forcorr <- df
+df_forcorr$bed = as.integer(df_forcorr$bed)
+df_forcorr$bath = as.integer(df_forcorr$bath)
+
+df_forcorr <-  subset(df_forcorr, select = -c(city,state,zip_code ))
+str(df_forcorr)
+corr = cor(df_forcorr)
+corr
+```
+```{r include=FALSE}
+loadPkg("corrplot")
+```
+
+```{r echo=FALSE}
+corrplot(corr, method = "square") 
+```
+```{r echo=FALSE}
+corrplot(corr, method = "number")
+```
+
+## Which is the most significant factor to be considered in house prices?
+
+According to our correlation graph, we build up the first linear model between price and bed.
+
+There is a 6.23% variability in price being explained by the beds in this linear model. 
+Variation in y (price) is 6.23%, explained by x (bed). The value is relatively low to explain everything.
+ 
+The Intercept value is at b =  224994, about 47.68 std err away from zero, with p-value 2⨉10−16. It is tiny, meaning it is very significant (to reject the null hypothesis that b = 0), as seen from the three asterisks. 
+ 
+The slope/coefficient for bed is at b1 = 71160, about 52.92 std err away from zero, with p-value 2⨉10−16. Again, this is extremely small, meaning it is significant (to reject the null hypothesis that b1 = 0). So we are very confident that bed has a positive correlation with price. 
+```{r include=FALSE}
+df$bed = as.numeric(df$bed)
+df$bath = as.numeric(df$bath)
+df$state = as.numeric(df$state)
+```
+
+```{r include=FALSE}
+fit1 <- lm(price ~ bed, data = df)
+```
+
+```{r echo=FALSE,results='markup'}
+summary(fit1)
+```
+
+According to our correlation graph, we build up the second linear model between price and bath.
+
+There is a 24.66% variability in price explained by the bed in this linear model. 
+Variation in y (price) is 24.66%, explained by x (bed). The value is relatively low to explain everything.
+ 
+The Intercept value is at b =  84812, about  24.5 std err away from zero, with p-value 2⨉10−16. It is minimal, meaning it is very significant (to reject the null hypothesis that b = 0), as seen from the three asterisks. 
+ 
+The slope/coefficient for the bath is at b1 = 167636, about 117.4 std err away from zero, with a p-value of 2⨉10−16. Again, this is extremely small, meaning it is significant (to reject the null hypothesis that b1 = 0). So we are very confident that bath has a positive correlation with price. 
+
+```{r include=FALSE, results='markup'}
+fit2 <- lm(price ~ bath, data = df)
+```
+
+```{r echo=FALSE, results='markup'}
+summary(fit2)
+```
+
+There is a 24.68% variability in price explained by a bed in this linear model. 
+Variation in y (price) is 24.68%, explained by x1 (bed) and x2 (bath). The value is relatively higher than the model1 to explain everything.
+ 
+The Intercept value is at b =  75370, about 16.828 std err away from zero, with p-value 2⨉10−16. It is minimal, meaning it is very significant (to reject the null hypothesis that b = 0), as seen from the three asterisks. 
+ 
+The slope/coefficient for bed is at b1 = 4557, about 3.321 std err away from zero, with a p-value of 0.000896. Again, this is extremely small, meaning it is very significant. So we are very confident that bed has a positive correlation with price. 
+
+The slope/coefficient for the bath is at b1 = 165055, about 101.555 std err away from zero, with a p-value 2⨉10−16. Again, this is extremely small, meaning it is very significant. So we are very confident that bed and bath positively correlate with price. 
+
+```{r include=FALSE, results='markup'}
+fit3 <- lm(price ~ bed+bath, data = df)
+```
+
+```{r echo=FALSE, results='markup'}
+summary(fit3)
+```
+
+We now develop the ANOVA test to indicate which model is the most suitable for the data frame; model 3 is the fittest model among the three models, as seen from the three asterisks.
+```{r modelanova, include=FALSE}
+anova(fit1,fit2,fit3) -> anovaRes
+```
+
+```{r echo=FALSE, results='markup'}
+anovaRes
+```
+
+```{r echo=FALSE, results='markup'}
+xkabledply(anovaRes, title = "ANOVA comparison between the models")
+```
+
+The Variance Inflation Factor VIF measures how good/bad two regressors (*x*-variables) are correlated to others. And the Vif we have for model three is 1.3, which variables are mildly correlated, and that is considered to be great where it is between 1 < vif < 5(the rule of thumb)
+
+```{r echo=FALSE, results='markup'}
+xkablevif(fit3)
+```
+
+## Does the mean values of price get affected by no. of beds and baths?
+
+### Tukey-HSD test
+```{r echo=FALSE, results=T}
+anova_hb <- aov(price ~ factor(bed), data= df)
+anova_hb_summary <- summary(anova_hb)
+anova_hb_summary
+xkabledply(anova_hb)
+tukey_test <- TukeyHSD(anova_hb)
+tukey_test
+plot(TukeyHSD(anova_hb, conf.level=.95))
+```
+
+H0: The mean house prices are the same across the different numbers of beds.
+H1: The mean house prices are different across the different numbers of beds.
+The ANOVA test for the house price and the number of beds indicates that the p-value is less than 0.05. So we need to reject the null hypothesis, and the mean price of the houses is different for the number of beds.
+As the means of the groups are significantly different, we can use the Turkey test for possible pairwise comparisons. Expect 6-4 and 7-5 remaining comparisons are statistically significant at a 95 percent confidence interval. The Tukey plot describes the difference in the mean values between the different bed levels.
+
+```{r echo=FALSE, results=T}
+anova_hbath <- aov(price ~ factor(bath), data= df)
+anova_hbath_summary <- summary(anova_hbath)
+anova_hbath_summary
+xkabledply(anova_hbath)
+tukey_test_hbath <- TukeyHSD(anova_hbath)
+tukey_test_hbath
+plot(TukeyHSD(anova_hbath, conf.level=.95))
+```
+H0: The mean house prices are the same across the different numbers of baths.
+H1: The mean house prices are different across the different numbers of baths.
+The ANOVA test for the house price and the number of bathrooms indicates that the p-value is less than 0.05. So we need to reject the null hypothesis, and the mean price of the houses is different from the number of baths. From the Tukey test, the pairwise comparison between each group is statistically significant at a 95% confidence interval.
+
+### Chi test
+```{r echo=FALSE, results=T}
+contable = table(df$bed, df$bath)
+xkabledply(contable, title="Contingency table for beds vs baths in house_dataframe")
+chitest = chisq.test(contable)
+chitest
+```
+
+# Conclusion
+
+Real Estate Analysis has been a well-known topic for research in the world of Data Science. It is chosen as a suitable domain for Machine Learning because the data is almost always linear. This means the price of a house is almost always proportional to the number of beds, baths, and house size. We can do more with more features like the house's age and the date it was sold. A model built with an excellent real estate dataset accurately predicts how much a house will be priced in the future. 
+
+# Bibliography
+
+USA Real Estate Dataset:https://www.kaggle.com/datasets/ahmedshahriarsakib/usa-real-estate-dataset

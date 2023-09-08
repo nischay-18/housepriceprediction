@@ -1,0 +1,92 @@
+```{r}
+df <- data.frame(read.csv('realtor-data.csv'))
+```
+
+```{r}
+summary(df)
+```
+```{r}
+df <- df[!duplicated(df), ]
+```
+```{r}
+df <- subset(df, select = -c(sold_date, street, full_address, status))
+```
+```{r}
+library(dplyr)
+library(tidyr)
+```
+```{r}
+df<- df[!df$city=="", ]
+```
+```{r}
+library(ezids)
+outliers<-outlierKD2(df, bed, rm = TRUE, histogram = TRUE)
+outliers<- outlierKD2(outliers, bath, rm = TRUE)
+outliers <- outlierKD2(outliers, acre_lot, rm = TRUE)
+outliers <- outlierKD2(outliers, house_size, rm= TRUE)
+outliers <- outlierKD2(outliers, price, rm=TRUE)
+outliers <- na.omit(outliers)
+nrow(outliers)
+```
+```{r}
+head(outliers)
+nrow(outliers)
+```
+
+
+```{r}
+outliers$bed[is.na(outliers$bed)]<-median(outliers$bed,na.rm=TRUE)
+outliers$bath[is.na(outliers$bath)]<-median(outliers$bath,na.rm=TRUE)
+outliers$acre_lot[is.na(outliers$acre_lot)]<-median(outliers$acre_lot,na.rm=TRUE)
+outliers$house_size[is.na(outliers$house_size)]<-median(outliers$house_size,na.rm=TRUE)
+outliers$price[is.na(outliers$price)]<-median(outliers$price,na.rm=TRUE)
+```
+
+```{r}
+#df <- df %>% group_by(city) %>% mutate(bed= replace_na(bed,round(median(bed, na.rm = TRUE))), bath= replace_na(bath, round(median(bath, na.rm=TRUE))), acre_lot= replace_na(acre_lot,round(median(acre_lot,na.rm= TRUE))), house_size = replace_na(house_size,round(median(house_size, na.rm=TRUE))))
+```
+```{r}
+summary(outliers)
+```
+
+```{r}
+str(outliers)
+```
+
+```{r}
+library(ggplot2)
+ggplot(outliers, aes(bed, price)) + geom_boxplot()
+```
+```{r}
+outliers$bath <- as.factor(outliers$bath)
+outliers$bed <- as.factor(outliers$bed)
+outliers$state <- as.factor(outliers$state)
+```
+
+```{r}
+library(ggplot2)
+ggplot(outliers, aes(bed, price)) + geom_boxplot()
+```
+```{r}
+ggplot(outliers, aes(state, price, fill = state)) + geom_boxplot() + theme(axis.text.x = element_text(angle=90))
+```
+```{r}
+house_dataframe <- subset(outliers, state != 'West Virginia' & state !='Wyoming')
+```
+
+```{r}
+head(house_dataframe)
+house_dataframe[house_dataframe$city == 'Wyoming']
+```
+
+```{r}
+write.csv(house_dataframe, file = 'houseprices.csv', row.names = FALSE)
+```
+
+
+
+
+
+
+ 
+

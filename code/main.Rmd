@@ -1,0 +1,279 @@
+---
+title: "USA House Price Analysis"
+author: "Team 6"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    code_folding: hide
+    number_sections: true
+    toc: yes
+    toc_depth: 3
+    toc_float: yes
+  pdf_document:
+    toc: yes
+    toc_depth: '3'
+---
+
+```{r init, include=FALSE}
+# The package "ezids" (EZ Intro to Data Science) includes a lot of the helper functions we developed for the course. 
+# Some of the frequently used functions are loadPkg(), xkabledply(), xkablesummary(), uzscale(), etc.
+library(ezids)
+ 
+# some of common options (and the defaults) are: 
+# include=T, eval=T, echo=T, results='hide'/'asis'/'markup',..., collapse=F, warning=T, message=T, error=T, cache=T, fig.width=6, fig.height=4, fig.dim=c(6,4) #inches, fig.align='left'/'center','right', 
+# knitr::opts_chunk$set(warning = F, results = "markup", message = F)
+knitr::opts_chunk$set(warning = F, results = "hide", message = F)
+options(scientific=T, digits = 3) 
+options(scipen=999, digits = 3) 
+# ‘scipen’: integer. A penalty to be applied when deciding to print numeric values in fixed or exponential notation.  Positive values bias towards fixed and negative towards scientific notation: fixed notation will be preferred unless it is more than ‘scipen’ digits wider.
+# use scipen=999 to prevent scientific notation at all times
+```
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+```
+All the required libraries are imported here.
+
+## Reading the data
+```{r}
+df <- data.frame(read.csv('../data/houseprices.csv'))
+head(df)
+```
+The dataset is imported here.
+The variables used for the data frame: 
+
+* `price`: The price of the each home 
+* `bed`: Number of bed rooms in the house
+* `bath`: Number of bathrooms in the house
+* `acre_lot`: Area of the land
+* `city`: city of the house 
+* `state`:state of the house
+* `zip_code`: Zip code of the house
+* `house_size`: Size of the house 
+
+Here, we are converting the total number of beds, baths, and states to the factor variables. The total number of the rows are `r nrow(df)` and the total number of the columns are `r ncol(df)`
+
+```{r}
+df$bed = as.factor(df$bed)
+df$bath = as.factor(df$bath)
+df$state = as.factor(df$state)
+```
+Converting the bath, bed & state variables into factors to better plot the data.
+
+
+```{r}
+min(df$price)
+max(df$price)
+mean(df$price)
+sd(df$price)
+```
+The minimum house price in the entire data set is $3900, while the maximum price of the house is
+$1625000. 
+The mean house price of the data set is $463442. The standard deviation of the entire data set is 
+$297437'
+```{r}
+str(df)
+```
+Getting the structure of the dataset. Here, we can see that the required variables are changed into factors and we can gain input as to which columns we can remove that do not affect the output of the data.
+
+```{r}
+mynamestheme <- theme(
+  plot.title = element_text(family = "Helvetica", face = "bold", size = (15))
+)
+  plot.title = element_text(family = "Helvetica", face = "bold", size = (15))
+ggplot(df, aes(acre_lot)) + geom_histogram(binwidth = 0.08, fill= "pink") + mynamestheme+ labs(title = "acre lot distribution")
+ggplot(df,aes(house_size)) + geom_histogram(binwidth = 15, fill= "orange" ) + mynamestheme + labs(title = "House size distribution")
+ 
+```
+The histograms for the house_size and acre_lot indicates that the most of the house size is between 1200 to 1400, and most the houses regarding the acre_lot is between 0.1 to 1.3. Here, we can observe from the data that there are more average size houses compared to bigger size or smaller sized houses.
+
+```{r}
+ggplot(df, aes(bed,price, fill =  bed)) + geom_boxplot() + mynamestheme + labs(title = "Box plot for house price depending on no.of beds")
+```
+The box plot shows what the median distribution of the price of houses for no. of bedrooms. We gained the idea that the no. of bedrooms is weakly correlated with the price of the house.
+
+```{r}
+ggplot(df, aes(bath,price, fill= bath)) + geom_boxplot() + mynamestheme +labs(title = "Box plot for house price depending on no.of baths") 
+```
+The boxplot represents the distribution of mean for no. of bathrooms and the price of the house. We can see that as the no. of bathrooms go up, the price also goes up, though not drastically. This means that the bath variable is strongly correlated with the price of the house, atleast more than the correlation between price and number of bedrooms.
+
+```{r}
+ggplot(df, aes(bed)) + geom_bar(fill="orange") + mynamestheme + labs(title = "Box plot for different number of beds")
+ggplot(df, aes(bath)) + geom_bar(fill="pink") + mynamestheme + labs(title = "Box plot for different number of baths")
+```
+From these bar plots, we can observe that there are more houses with median number of bedrooms and bathrooms. This confirms the earlier hypothesis that there are more average sized houses than small or large houses.
+
+```{r}
+
+ggplot(df, aes(bed, house_size,fill=bed)) + geom_boxplot() + mynamestheme + labs(title = "Box plot for house size vs  number of beds")
+
+```
+The boxplot provides the distribution of the house_size with respect to the number of beds. It also shows the obvious distribution of the houses being bigger as the number of bedrooms gets higher.
+
+```{r}
+ggplot(df, aes(state, price, fill= state)) + geom_boxplot() + theme(axis.text.x = element_text(angle = 90)) +  mynamestheme + labs(title = "Box plot for price for different states")
+```
+```{r}
+ggplot(df, aes(bed, price, fill = bed)) + geom_boxplot() + theme(axis.text.x = element_text(angle = 90)) +  mynamestheme + labs(title = "Box plot for price for different states")
+```
+
+The box plot shows the distribution of the house prices with respect to each state. We gained the insight that living is Virgin Islands and New York can empty your wallets more compared to other states, the highest being Virgin Islands. The place with the lowest house prices is Puerto Rico.
+
+
+
+```{r}
+anova_hb <- aov(price ~ bed, data= df)
+anova_hb_summary <- summary(anova_hb)
+anova_hb_summary
+xkabledply(anova_hb)
+```
+
+```{r}
+tukey_test <- TukeyHSD(anova_hb)
+tukey_test
+
+
+```
+```{r}
+plot(TukeyHSD(anova_hb, conf.level=.95))
+```
+
+H0: The mean house prices are the same across the different number of the beds.
+H1: The mean house prices are different across the different number of the beds.
+The anova test for the house price and the number of beds indicates that as p value is less than 0.05. So we need to reject the null hypothesis, and the mean price of the houses are different for the number of beds.
+As the means of the groups are significantly different, we can use the Turkey test for possible pairwise comparisons. Expect 6-4 and 7-5 remaining comparisons are statistically significant at 95 percent confidence interval. The Tukey plot describes the difference in the mean values between the different levels of the bed.
+```{r} 
+anova_hbath <- aov(price ~ bath, data= df)
+anova_hbath_summary <- summary(anova_hbath)
+anova_hbath_summary
+xkabledply(anova_hbath)
+```
+```{r}
+tukey_test_hbath <- TukeyHSD(anova_hbath)
+tukey_test_hbath
+
+```
+H0: The mean house prices are the same across the different number of the baths.
+H1: The mean house prices are different across the different number of the baths.
+The anova test for the house price and the number of bath rooms indicates that as p value is less than 0.05. So we need to reject the null hypothesis, and the mean price of the houses are different form the number of baths. From the tukey test the pair-wise comparison between each group is statistically significant at 95% confidence interval.
+
+```{r}
+plot(TukeyHSD(anova_hbath, conf.level=.95))
+
+```
+
+
+```{r}
+contable = table(df$bed, df$bath)
+
+xkabledply(contable, title="Contingency table for beds vs baths in house_dataframe")
+```
+
+```{r}
+chitest = chisq.test(contable)
+chitest
+```
+H0: The number of bedrooms and number of bathrooms are independent.
+H1: The number of bedrooms and number of bedrooms are not independent.
+Since the p-value is 0.0000000000000002, which is lower than 0.05, so we need to reject the null hypothesis. Thus, condition and grade are not independent. Both the bed and bath are correlated.
+
+```{r}
+head(df)
+df_forcorr <- df
+df_forcorr$bed = as.integer(df_forcorr$bed)
+df_forcorr$bath = as.integer(df_forcorr$bath)
+
+df_forcorr <-  subset(df_forcorr, select = -c(city,state,zip_code ))
+str(df_forcorr)
+corr = cor(df_forcorr)
+corr
+```
+To plot the correlation between the variables, first we created a separate data frame, and the factor variables of bed and bath are converted into integer variables as the correlation for the categorical variables cannot be plotted. 
+```{r}
+loadPkg("corrplot")
+```
+
+```{r}
+corrplot(corr, method = "square") 
+```
+```{r}
+corrplot(corr, method = "number")
+```
+By seeing the correlation plots we can see that the price of the house is highly correlated with bath and house_size.
+```{r}
+head(df)
+stats<-data.frame(df %>% group_by(state) %>% summarise(mean = mean(price), median = median(price), max= max(price), min = min(price), sd = sd(price)))
+
+```
+Here, we grouped the data by the state column and calculated the mean, median, maximum, minimum, and standard deviation of the houses of that particular state.    
+```{r}
+head(stats)
+str(stats)
+```
+```{r}
+ggplot(stats, aes(x = state, y = mean, fill = state)) + 
+  geom_bar(stat = "identity") + theme(axis.text.x = element_text(angle=90)) +
+ mynamestheme + labs(title = "Mean prices of the houses for different states")
+```
+The bar plot gives the mean house prices of the particular state, form the plot we can find that New York and Virgin Islands has high mean house prices.
+```{r}
+ggplot(stats, aes(x = state, y = median, fill = state)) + geom_bar(stat = "identity") + theme(axis.text.x = element_text(angle=90)) + mynamestheme + labs(title = "Median prices of the houses for different states")
+
+```
+
+
+```{r}
+ggplot(stats, aes(x = state, y = max, fill = state)) + geom_bar(stat = "identity") + theme(axis.text.x = element_text(angle=90)) +  mynamestheme + labs(title = "maximum of prices for different states")
+
+```
+
+```{r}
+ggplot(stats, aes(x = state, y = min, fill = state)) + geom_bar(stat = "identity") + theme(axis.text.x = element_text(angle=90)) + mynamestheme + labs(title = "Minimum prices of the houses for different states")
+```
+
+
+```{r}
+ggplot(df, aes(state, acre_lot, fill = state)) + geom_boxplot() + theme(axis.text.x = element_text(angle=90))+ mynamestheme + labs(title = "Acre lot distribution for different states")
+```
+```{r}
+ggplot(df, aes(state, house_size, fill = state)) + geom_boxplot() + theme(axis.text.x = element_text(angle=90)) + mynamestheme + labs(title = "House size distribution for different states")
+```
+
+```{r}
+stats_df<-data.frame(df %>% group_by(state) %>% summarise(mean = mean(acre_lot), median = median(acre_lot), sd = sd(acre_lot)))
+```
+
+```{r}
+head(stats_df)
+```
+Here, we have gropued the 
+```{r}
+ggplot(stats_df, aes(x = state, y = mean, fill = state)) + geom_bar(stat = "identity") + theme(axis.text.x = element_text(angle=90))
+```
+
+```{r}
+ggplot(stats_df, aes(x = state, y = median, fill = state)) + geom_bar(stat = "identity") + theme(axis.text.x = element_text(angle=90))
+```
+
+```{r}
+ggplot(stats_df, aes(x = state, y = sd, fill = state)) + geom_bar(stat = "identity") + theme(axis.text.x = element_text(angle=90))
+```
+
+```{r}
+stats_df_hs<-data.frame(df %>% group_by(state) %>% summarise(mean = mean(house_size), median = median(house_size), sd = sd(house_size)))
+```
+
+```{r}
+ggplot(stats_df_hs, aes(x = state, y = mean, fill = state)) + geom_bar(stat = "identity") + theme(axis.text.x = element_text(angle=90))
+```
+
+```{r}
+ggplot(stats_df_hs, aes(x = state, y = median, fill = state)) + geom_bar(stat = "identity") + theme(axis.text.x = element_text(angle=90))
+```
+
+```{r}
+ggplot(stats_df_hs, aes(x = state, y = sd, fill = state)) + geom_bar(stat = "identity") + theme(axis.text.x = element_text(angle=90))
+```
+

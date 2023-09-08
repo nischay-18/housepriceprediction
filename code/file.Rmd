@@ -1,0 +1,36 @@
+---
+title: "USA Real Estate Data"
+author: "Team 6"
+date: "10/17/2022"
+output:  
+    rmdformats::downcute:
+      toc_float: true
+      number_sections: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+options(scipen = 999, digits = 3, big.mark=",", warn = -1)
+```
+
+```{r basicfunct, include=FALSE}
+loadPkg = function(x) { if (!require(x,character.only=T, quietly =T)) { install.packages(x,dep=T,repos="http://cran.us.r-project.org"); if(!require(x,character.only=T)) stop("Package not found") } }
+```
+
+# Chapter 1 Introduction:
+
+The USA has one of the hottest real estate markets right now. We needed a massive amount of data with various factors to know and analyze the real-estate data. Forecasting and evaluating the real estate market helps assess the stability of the US real estate market. Predicting home prices may also give a solid foundation for real estate investors to develop investment strategies and minimize losses. The issue arises when numerous variables, such as location and property demand, may influence the house price. Thus most stakeholders, including buyers and developers, home builders, and the real estate sector, would like to know the exact attributes or the specific factors that influence house prices to help customers and investors make decisions.To get all this data, we got a scraped dataset from the website https://www.realtor.com (found on Kaggle). This dataset contains features like no. of beds, baths, streets, city, and zip code and has 923160 observations. To get meaningful insights into this massive pile of data, we have to perform statistical analysis, Exploratory Data Analysis on the data set and visualize some of the observations.
+
+# Dataset link: 
+https://www.kaggle.com/datasets/ahmedshahriarsakib/usa-real-estate-dataset
+
+# Chapter 2 SMART Questions:
+
+1. Can we predict real-world housing prices based on this data?
+2. What is the correlation between house prices and other attributes?
+3. Which location contains the house with the highest and lowest prices?
+4. What could be the trend behind housing prices?
+
+# Chapter 3 Link of GitHub repo:
+
+Link: https://github.com/JayZhangApril/22FA_DATS6101_10W_GROUP6.git
